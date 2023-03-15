@@ -8,8 +8,6 @@ pygame.init()
 
 size = width, height = 1280, 800
 bg = 10, 10, 10
-white = 255, 255, 255
-radius = 10
 
 screen = pygame.display.set_mode(size)
 
@@ -51,7 +49,7 @@ while True:
                 pause = not pause
             if event.key == pygame.K_t:
                 draw_trails = not draw_trails
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             space_pos = world.translate_to_space(event.pos)
             center_corpus = world.pos_is_inside(space_pos)
             if center_corpus is None:
@@ -60,11 +58,23 @@ while True:
             else:
                 draw_selection = True
             world.empty_trails()
+        if event.type == pygame.MOUSEWHEEL:
+            if event.y > 0:
+                if world.scale >= 1.1:
+                    world.scale = world.scale - 0.1 * event.y
+                    if world.scale < 1:
+                        world.scale = 1
+                else:
+                    world.scale = 1
+            else:
+                world.scale = world.scale - 0.1 * event.y
+            world.redef_radiuses()
+            world.empty_trails()
 
     if center_corpus is not None:
         world.offset_origin([center_corpus.x, center_corpus.y])
     elif new_center is not None:
-        world.offset_origin(space_pos)
+        world.offset_origin(new_center)
         new_center = None
     if not pause:
         draw_selection = False
@@ -73,17 +83,17 @@ while True:
     if draw_selection:
         center_pos = x, y = world.translate_to_screen([center_corpus.x, center_corpus.y])
         select_color = assets.change_brightness(assets.get_color("white"), 0.5)
-        pygame.draw.circle(screen, center_corpus.color, center_pos, center_corpus.radius)
-        pygame.draw.circle(screen, select_color, center_pos, center_corpus.radius + 2)
+        pygame.draw.circle(screen, center_corpus.color, center_pos, center_corpus.pixel_radius)
+        pygame.draw.circle(screen, select_color, center_pos, center_corpus.pixel_radius + 2)
     for corpus in world.corpus_list:
         pos = x, y = world.translate_to_screen([corpus.x, corpus.y])
         if len(corpus.trail) > 0 and draw_trails:
             pygame.draw.lines(screen, corpus.trail_color, False, corpus.trail + [pos])
-        pygame.draw.circle(screen, corpus.color, pos, corpus.radius)
+        pygame.draw.circle(screen, corpus.color, pos, corpus.pixel_radius)
     fps.render(screen)
 
     if pause:
-        pygame.draw.rect(screen, white, pause_rect1)
-        pygame.draw.rect(screen, white, pause_rect2)
+        pygame.draw.rect(screen, assets.get_color("white"), pause_rect1)
+        pygame.draw.rect(screen, assets.get_color("white"), pause_rect2)
     pygame.display.flip()
     fps.clock.tick(60)

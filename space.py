@@ -1,7 +1,6 @@
 import math
 import assets
 
-density = 10000  # a unit circle's mass
 CENTER_SCREEN = [640, 400]
 MAX_TRAIL = 240
 
@@ -20,10 +19,8 @@ class Corpus:
             self.trail_color = (255, 255, 255)
         else:
             self.trail_color = assets.change_brightness(color, 0.5)
-        if mass <= density:
-            self.radius = 1
-        else:
-            self.radius = int(round(math.sqrt(mass / density)))
+        self.real_radius = 0
+        self.pixel_radius = 0
         self.collidedWith = None
         self.is_negligible = is_negligible
         self.trail = []
@@ -33,6 +30,13 @@ class Corpus:
         self.old_y = self.y
         self.x = self.x + time * self.speed[0]
         self.y = self.y + time * self.speed[1]
+
+    def def_real_radius(self, density, scale):
+        self.real_radius = math.sqrt(self.mass / density)
+        self.pixel_radius = int(round(self.real_radius / scale))
+
+    def def_pixel_radius(self, scale):
+        self.pixel_radius = int(round(self.real_radius / scale))
 
     def sum_speeds(self):
         self.speed = vector_sum(self.speed, self.accum_speed)
@@ -46,10 +50,12 @@ class Space:
         self.origin_y = 0
         self.scale = scale  # how many units of space for each pixel on screen
         self.g = g
+        self.density = scale * 10
 
     def insert_corpus(self, new_corpus):
         if isinstance(new_corpus, Corpus):
             self.corpus_list.append(new_corpus)
+            new_corpus.def_real_radius(self.density, self.scale)
         else:
             print("Attempt to insert non-corpus into space!")
 
@@ -70,8 +76,8 @@ class Space:
     def pos_is_inside(self, pos):
         for corpus in self.corpus_list:
             dist = [pos[0] - corpus.x, pos[1] - corpus.y]
-            practical_radius = corpus.radius  # radius for clicking
-            if corpus.radius <= 2:  # if radius is too small, increases it to help user
+            practical_radius = corpus.pixel_radius  # radius for clicking
+            if corpus.pixel_radius <= 2:  # if radius is too small, increases it to help user
                 practical_radius = 3
             if norm(dist) <= practical_radius * self.scale:
                 return corpus
@@ -88,6 +94,10 @@ class Space:
     def empty_trails(self):
         for corpus in self.corpus_list:
             corpus.trail = []
+
+    def redef_radiuses(self):
+        for corpus in self.corpus_list:
+            corpus.def_pixel_radius(self.scale)
 
     def offset_origin(self, pos):
         self.origin_x = pos[0]
@@ -118,10 +128,7 @@ class Space:
         q = momentum(main_corpus.mass, main_corpus.speed, sec_corpus.mass, sec_corpus.speed)
         self.corpus_list.remove(sec_corpus)
         main_corpus.mass = main_corpus.mass + sec_corpus.mass
-        if main_corpus.mass < density:
-            main_corpus.radius = 1
-        else:
-            main_corpus.radius = int(round(math.sqrt(main_corpus.mass / density)))
+        main_corpus.real_radius = math.sqrt(main_corpus.mass / self.density)
         print(q)
         main_corpus.speed = scalar_mult(1 / main_corpus.mass, q)
 
@@ -132,9 +139,9 @@ class Space:
         dist_a = [corpus_b.x - corpus_a.x, corpus_b.y - corpus_a.y]
         dist_b = [-dist_a[0], -dist_a[1]]
         scalar_dist = norm(dist_a)
-        if scalar_dist <= corpus_a.radius * self.scale:
+        if scalar_dist <= corpus_a.real_radius:
             corpus_b.collidedWith = corpus_a
-        if scalar_dist <= corpus_b.radius * self.scale:
+        if scalar_dist <= corpus_b.real_radius:
             corpus_a.collidedWith = corpus_b
         ctpd_v_a = normalize(dist_a)
         ctpd_v_b = normalize(dist_b)
