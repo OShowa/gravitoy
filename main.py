@@ -9,11 +9,11 @@ pygame.init()
 size = width, height = 1280, 800
 bg = 10, 10, 10
 
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode(size, pygame.RESIZABLE)
 
 ball = None
 
-world = space.Space(10, 1)
+world = space.Space(size, 10, 1)
 
 input_file = open("input.txt", "r")
 lines = input_file.readlines()
@@ -70,6 +70,10 @@ while True:
                 world.scale = world.scale - 0.1 * event.y
             world.redef_radiuses()
             world.empty_trails()
+        if event.type == pygame.VIDEORESIZE:
+            size = (event.w, event.h)
+            screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+            world.redef_screen_size(size)
 
     if center_corpus is not None:
         world.offset_origin([center_corpus.x, center_corpus.y])

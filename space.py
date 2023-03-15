@@ -1,7 +1,6 @@
 import math
 import assets
 
-CENTER_SCREEN = [640, 400]
 MAX_TRAIL = 240
 
 
@@ -44,13 +43,14 @@ class Corpus:
 
 
 class Space:
-    def __init__(self, scale=1, g=0.1):
+    def __init__(self, screen_size, scale=10, g=1):
         self.corpus_list = []
         self.origin_x = 0  # space coordinates correspondent to center screen (640, 400)
         self.origin_y = 0
         self.scale = scale  # how many units of space for each pixel on screen
         self.g = g
         self.density = scale * 10
+        self.center_screen = [screen_size[0] // 2, screen_size[1] // 2]
 
     def insert_corpus(self, new_corpus):
         if isinstance(new_corpus, Corpus):
@@ -62,15 +62,15 @@ class Space:
     def translate_to_screen(self, pos):
         x = pos[0]
         y = pos[1]
-        screen_x = int(round(CENTER_SCREEN[0] + (x - self.origin_x) / self.scale))
-        screen_y = int(round(CENTER_SCREEN[1] + (y - self.origin_y) / self.scale))
+        screen_x = int(round(self.center_screen[0] + (x - self.origin_x) / self.scale))
+        screen_y = int(round(self.center_screen[1] + (y - self.origin_y) / self.scale))
         return screen_x, screen_y
 
-    def translate_to_space(self, pos):
+    def translate_to_space(self, pos):  # USE ONLY FOR USER INPUT
         x = pos[0]
         y = pos[1]
-        space_x = (x - CENTER_SCREEN[0]) * self.scale + self.origin_x
-        space_y = (y - CENTER_SCREEN[1]) * self.scale + self.origin_y
+        space_x = (x - self.center_screen[0]) * self.scale + self.origin_x
+        space_y = (y - self.center_screen[1]) * self.scale + self.origin_y
         return space_x, space_y
 
     def pos_is_inside(self, pos):
@@ -98,6 +98,9 @@ class Space:
     def redef_radiuses(self):
         for corpus in self.corpus_list:
             corpus.def_pixel_radius(self.scale)
+
+    def redef_screen_size(self, screen_size):
+        self.center_screen = [screen_size[0]//2, screen_size[1]//2]
 
     def offset_origin(self, pos):
         self.origin_x = pos[0]
