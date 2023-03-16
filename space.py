@@ -1,5 +1,5 @@
 import math
-import assets
+from library import assets
 
 MAX_TRAIL = 240
 
@@ -95,11 +95,16 @@ class Space:
         for corpus in self.corpus_list:
             corpus.trail = []
 
-    def redef_radiuses(self):
+    def redef_scale(self, new_scale):
+        self.scale = new_scale
         for corpus in self.corpus_list:
             corpus.def_pixel_radius(self.scale)
 
     def redef_screen_size(self, screen_size):
+        current_area = self.center_screen[0] * self.center_screen[1] * 4
+        new_area = screen_size[0] * screen_size[1]
+        scale_factor = math.sqrt(current_area / new_area)
+        self.redef_scale(self.scale * scale_factor)
         self.center_screen = [screen_size[0]//2, screen_size[1]//2]
 
     def offset_origin(self, pos):

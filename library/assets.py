@@ -12,12 +12,12 @@ default_colors = {"white": (255, 255, 255),
 class FPS:
     def __init__(self):
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("Verdana", 20)
+        self.font = pygame.font.Font("library/pixelfont.ttf", 20)
         self.text = self.font.render(str(self.clock.get_fps()), True, default_colors["white"])
 
-    def render(self, display):
+    def render(self, display, size):
         self.text = self.font.render(str(int(self.clock.get_fps())), True, default_colors["white"])
-        display.blit(self.text, (1200, 20))
+        display.blit(self.text, (size[0] - 40, 20))
 
 
 def get_color(color):

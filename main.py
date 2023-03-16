@@ -1,19 +1,19 @@
 import pygame
 import sys
 import space
-import assets
-
+from library import assets
 
 pygame.init()
 
 size = width, height = 1280, 800
 bg = 10, 10, 10
+start_scale = 10
 
 screen = pygame.display.set_mode(size, pygame.RESIZABLE)
 
 ball = None
 
-world = space.Space(size, 10, 1)
+world = space.Space(size, start_scale, 1)
 
 input_file = open("input.txt", "r")
 lines = input_file.readlines()
@@ -59,21 +59,27 @@ while True:
                 draw_selection = True
             world.empty_trails()
         if event.type == pygame.MOUSEWHEEL:
+            new_scale = 0
             if event.y > 0:
                 if world.scale >= 1.1:
-                    world.scale = world.scale - 0.1 * event.y
-                    if world.scale < 1:
-                        world.scale = 1
+                    new_scale = world.scale - 0.1 * event.y
+                    if new_scale < 1:
+                        new_scale = 1
                 else:
-                    world.scale = 1
+                    new_scale = 1
             else:
-                world.scale = world.scale - 0.1 * event.y
-            world.redef_radiuses()
+                new_scale = world.scale - 0.1 * event.y
+            world.redef_scale(new_scale)
             world.empty_trails()
         if event.type == pygame.VIDEORESIZE:
             size = (event.w, event.h)
+            if size[0] < 160:
+                size = (160, size[1])
+            if size[1] < 100:
+                size = (size[0], 100)
             screen = pygame.display.set_mode(size, pygame.RESIZABLE)
             world.redef_screen_size(size)
+            world.empty_trails()
 
     if center_corpus is not None:
         world.offset_origin([center_corpus.x, center_corpus.y])
@@ -94,7 +100,7 @@ while True:
         if len(corpus.trail) > 0 and draw_trails:
             pygame.draw.lines(screen, corpus.trail_color, False, corpus.trail + [pos])
         pygame.draw.circle(screen, corpus.color, pos, corpus.pixel_radius)
-    fps.render(screen)
+    fps.render(screen, size)
 
     if pause:
         pygame.draw.rect(screen, assets.get_color("white"), pause_rect1)
